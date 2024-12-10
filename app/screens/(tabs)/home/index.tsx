@@ -9,7 +9,7 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Welcome {user?.email}!</Text>
+            <Text style={styles.title}>Welcome {user?.displayName}!</Text>
             <View style={{alignItems: "center"}}>
                 <TouchableOpacity style={styles.buttonContainer} onPress={() => auth().signOut()}>
                     <Text style={styles.buttonText}> Sign out</Text>

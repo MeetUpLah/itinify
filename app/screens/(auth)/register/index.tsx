@@ -15,12 +15,14 @@ import { signUp } from '@/app/hooks/authUtils';
 export default function RegisterScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [loading, setLoading] = useState(false);
 
     const router = useRouter();
 
     const handleSignUp = async () => {
-        await signUp(email, password, setLoading);
+        await signUp(email, password, username, phoneNumber, setLoading);
     }
 
     const handleBack = () => {
@@ -39,6 +41,26 @@ export default function RegisterScreen() {
                 <Text style={styles.title}>Registration</Text>
                 <Text style={styles.description}>Start your journey with us now.</Text>
                 <KeyboardAvoidingView behavior={'padding'}>
+
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.fieldText}>Username</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder='Username'
+                            value={username}
+                            onChangeText={setUsername}
+                        />
+                    </View>
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.fieldText}>Phone Number</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder='Phone Number'
+                            value={phoneNumber}
+                            onChangeText={setPhoneNumber}
+                            keyboardType='phone-pad'
+                        />
+                    </View>
                     <View style={styles.fieldContainer}>
                         <Text style={styles.fieldText}>Email</Text>
                         <TextInput
