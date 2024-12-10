@@ -26,7 +26,7 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="friends/index"
+                name="friends"
                 options={{
                     title: 'Friends',
                     tabBarIcon: ({ color }) => <FontAwesome size={28} name="users" color={color} />,
