@@ -10,18 +10,28 @@ import {
 
 import React, { useState } from "react";
 import createClique from "./createClique";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import checkUser from "./checkUser";
 
 export default function addClique() {
   const [userInput, setUserInput] = useState<string>("");
   const [groupName, setGroupName] = useState<string>("");
   const [list, setList] = useState<string[]>([]);
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const username = Array.isArray(params.username)
+    ? params.username[0]
+    : params.username;
 
-  const handleAddList = () => {
+  const handleAddList = async () => {
     if (userInput.trim()) {
-      setList((prevItems) => [...prevItems, userInput.trim()]);
-      setUserInput("");
+      const isUserInDB = await checkUser(userInput.trim());
+      if (isUserInDB) {
+        setList((prevItems) => [...prevItems, userInput.trim()]);
+        setUserInput("");
+      } else {
+        alert("User not in database");
+      }
     }
   };
 
@@ -55,7 +65,7 @@ export default function addClique() {
         title="Create Clique"
         onPress={async () => {
           try {
-            await createClique(groupName, list, router);
+            await createClique(groupName, list, router, username);
             alert("Clique created successfully!");
           } catch (error: any) {
             alert(error.message);

@@ -5,43 +5,81 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import firestore from "@react-native-firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import auth from "@react-native-firebase/auth";
+import { Colors } from "react-native/Libraries/NewAppScreen";
 
 export default function FriendsScreen() {
   const router = useRouter();
+  const user = auth().currentUser;
+  const email = user?.email;
 
   const [list, setList] = useState<string[]>([]);
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAddClique = () => {
     router.push({
       pathname: "/screens/friends/components/addClique",
+      params: { username: username },
     });
+  };
+
+  const fetchUser = async () => {
+    try {
+      const users = await firestore().collection("users").get();
+      let fetchedusername = "";
+      users.forEach((doc) => {
+        const data = doc.data();
+        if (email === data.email.toLowerCase()) {
+          fetchedusername = data.username;
+          console.log("fetched user" + fetchedusername);
+          setUsername(fetchedusername);
+          console.log(username);
+        }
+      });
+      console.log(username);
+    } catch (Error) {
+      console.log("error in fetching username");
+    }
   };
 
   const fetchCliques = async () => {
     try {
-      const db = await firestore().collection("cliques").get();
+      setLoading(true);
+      await fetchUser();
+      const db = await firestore()
+        .collection("cliques")
+        .doc(username)
+        .collection("groups")
+        .get();
       const filteredCliques: string[] = [];
       db.forEach((doc) => {
         const data = doc.data();
-        if (data.name === "Bob") {
-          filteredCliques.push(data.groupName);
-        }
+        console.log(data.groupName);
+        filteredCliques.push(data.groupName);
       });
       setList(filteredCliques);
-      console.log("Data fetched");
+      console.log("Clique data fetched");
     } catch (Error) {
       console.error("error in fetching");
+    } finally {
+      setLoading(false);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchCliques();
-    }, [])
+      const fetchData = async () => {
+        await fetchUser();
+        fetchCliques();
+      };
+      fetchData();
+    }, [username])
   );
 
   return (
@@ -55,24 +93,28 @@ export default function FriendsScreen() {
           <Text style={styles.buttonText}>Add Clique</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={list}
-        keyExtractor={(data, index) => index.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.cliqueNameContainer}
-            onPress={() => {
-              router.push({
-                pathname: "/screens/friends/components/cliqueMembers",
-                params: { groupName: item },
-              });
-            }}
-          >
-            <Text style={styles.groupName}>{item}</Text>
-          </TouchableOpacity>
-        )}
-        style={styles.list}
-      />
+      {loading ? (
+        <ActivityIndicator size={"small"} color={"blue"} />
+      ) : (
+        <FlatList
+          data={list}
+          keyExtractor={(data, index) => index.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.cliqueNameContainer}
+              onPress={() => {
+                router.push({
+                  pathname: "/screens/friends/components/cliqueMembers",
+                  params: { groupName: item, username: username },
+                });
+              }}
+            >
+              <Text style={styles.groupName}>{item}</Text>
+            </TouchableOpacity>
+          )}
+          style={styles.list}
+        />
+      )}
     </SafeAreaView>
   );
 }

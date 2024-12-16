@@ -1,8 +1,17 @@
-import { View, Text, FlatList, StyleSheet, Button } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Button,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import firestore from "@react-native-firebase/firestore";
+import { Alert } from "react-native";
 
 const cliqueMembers = () => {
   const params = useLocalSearchParams();
@@ -10,12 +19,34 @@ const cliqueMembers = () => {
   const groupName = Array.isArray(params.groupName)
     ? params.groupName[0]
     : params.groupName;
+  const username = Array.isArray(params.username)
+    ? params.username[0]
+    : params.username;
+
   const [list, setList] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      const db = await firestore()
+        .collection("cliques")
+        .doc(username)
+        .collection("groups")
+        .doc(groupName);
+      db.delete().then(() => console.log("group deleted"));
+      router.back();
+    } catch (error: any) {
+      console.error("error when deleting group");
+    }
+  };
 
   const fetchClique = async () => {
     try {
+      setLoading(true);
       const db = firestore()
         .collection("cliques")
+        .doc(username)
+        .collection("groups")
         .doc(groupName)
         .collection("members");
       const snapshot = await db.get();
@@ -30,6 +61,8 @@ const cliqueMembers = () => {
       console.log("Data fetched");
     } catch (Error) {
       console.error("Error in fetching members");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,15 +79,35 @@ const cliqueMembers = () => {
         onPress={() => {
           router.push({
             pathname: "/screens/friends/components/addFriends",
-            params: { groupName: groupName },
+            params: { groupName: groupName, username: username },
           });
         }}
       />
-      <FlatList
-        data={list}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => <Text style={styles.Friends}>{item}</Text>}
-        style={styles.list}
+      {loading ? (
+        <ActivityIndicator size={"small"} color={"blue"} />
+      ) : (
+        <FlatList
+          data={list}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => <Text style={styles.Friends}>{item}</Text>}
+          style={styles.list}
+        />
+      )}
+      <Button
+        title="Delete Group"
+        onPress={() => {
+          Alert.alert("Are you sure?", "", [
+            {
+              text: "No",
+              onPress: () => console.log("Cancel Pressed"),
+              style: "cancel",
+            },
+            {
+              text: "Yes",
+              onPress: () => handleDelete(),
+            },
+          ]);
+        }}
       />
     </SafeAreaView>
   );
