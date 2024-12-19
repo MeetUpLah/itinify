@@ -37,7 +37,8 @@ export const signUp = async (email: string, password: string,
         // Add user to the firestore database (excluding password)
         firestore()
             .collection('users')
-            .add({
+            .doc(auth().currentUser?.uid)
+            .set({
                 email: email,
                 username: username,
                 phoneNumber: phoneNumber,
